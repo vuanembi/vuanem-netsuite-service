@@ -1,0 +1,3 @@
+[submodule "src/types/vuanem-netsuite-types"]
+	path = src/types/vuanem-netsuite-types
+	url = https://github.com/vuanembi/vuanem-netsuite-types.git

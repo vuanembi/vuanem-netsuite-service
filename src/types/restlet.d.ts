@@ -4,7 +4,3 @@ export type RestletOptions = {
 };
 
 export type RestletMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
-
-type Restlet = {
-  get:
-}

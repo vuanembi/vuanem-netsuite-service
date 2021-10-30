@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 import axios from 'axios';
-import type { Restlet, RestletMethod } from '../types/restlet';
+import type { RestletOptions, RestletMethod } from '../types/restlet';
 
 dotenv.config();
 
@@ -23,11 +23,14 @@ const oauth = OAuth({
 
 const axClient = axios.create();
 
-const requestRestlet = (restlet: Restlet, method: RestletMethod) => {
+const requestRestlet = (
+  { script, deploy }: RestletOptions,
+  method: RestletMethod
+) => {
   const request = async ({ params, body }: { params?: any; body?: any }) => {
     const requestParams = new URLSearchParams({
-      script: restlet.script,
-      deploy: restlet.deploy,
+      script,
+      deploy,
       ...params,
     });
     const requestURL = `${BASE_URL}?${requestParams.toString()}`;
@@ -59,4 +62,8 @@ const requestRestlet = (restlet: Restlet, method: RestletMethod) => {
   return request;
 };
 
-export default requestRestlet;
+export const get = (options: RestletOptions) => requestRestlet(options, 'GET');
+export const post = (options: RestletOptions) =>
+  requestRestlet(options, 'POST');
+export const del = (options: RestletOptions) =>
+  requestRestlet(options, 'DELETE');
