@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import axios from 'axios';
+import { URLSearchParams } from "url"
 import type { RestletOptions, RestletMethod } from '../types/restlet';
 
 dotenv.config();
