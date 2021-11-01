@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
 import type { HttpFunction } from '@google-cloud/functions-framework/build/src/functions';
-import * as express from 'express';
+import { defaultController, wrongMethodController } from './controller/common';
 import shopeeHandle from './controller/shopee';
 
 // import createSalesOrder from './controller/netsuite';
@@ -51,17 +51,14 @@ import shopeeHandle from './controller/shopee';
 //   }
 // });
 
-const defaultController = (res: express.Response) => res.status(200).send({ status: 'ok' });
-const wrongMethodController = (res: express.Response) => res.status(400).send({ status: 'Bad request' });
 
 export const main: HttpFunction = (req, res) => {
-  console.log(JSON.stringify(req));
-
-  if (req.method === 'GET') {
+  const {path, method, params, body } = req;
+  if (method === 'GET') {
     defaultController(res);
-  } else if (req.method === 'POST') {
-    if (req.path === 'shopee') {
-      shopeeHandle(req.body, res);
+  } else if (method === 'POST') {
+    if (path === 'shopee') {
+      shopeeHandle(body, res);
     } else {
       defaultController(res);
     }

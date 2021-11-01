@@ -3,6 +3,7 @@
 import axios from 'axios';
 
 import createSalesOrder from './netsuite';
+import { defaultController } from './common';
 import { telSalesOrder, telError } from './telegram';
 
 import type { PushData, OrderRequest, OrderResponse } from '../types/shopee';
@@ -78,29 +79,32 @@ const create = async ({
   return [errTask, task];
 };
 
-const shopeeHandle: Handler = async (data, res) => {
+const shopeeController: Handler = async (data, res) => {
   const {
     code,
     data: { status },
   } = data;
   if (code !== 3) {
-    res.status(200).send({ data: 'ok' });
-  }
-  if (status === 'UNPAID') {
-    const [errTask, task] = await create(data);
-    if (errTask || !task) {
-      telError({
-        name: shopeeEcommerce.name,
-        message: JSON.stringify(errTask),
-      });
-      res.status(500).send({ data: 'not ok' });
+    defaultController(res);
+  } else {
+    if (status === 'UNPAID') {
+      const [errTask, task] = await create(data);
+      if (errTask || !task) {
+        telError({
+          name: shopeeEcommerce.name,
+          message: JSON.stringify(errTask),
+        });
+        res.status(500).send({ data: 'not ok' });
+      } else {
+        telSalesOrder({
+          name: shopeeEcommerce.name,
+          salesOrder: task,
+        });
+      }
     } else {
-      telSalesOrder({
-        name: shopeeEcommerce.name,
-        salesOrder: task,
-      });
+      defaultController(res);
     }
   }
 };
 
-export default shopeeHandle;
+export default shopeeController;
