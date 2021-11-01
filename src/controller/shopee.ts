@@ -3,15 +3,32 @@
 import axios from 'axios';
 
 import createSalesOrder from './netsuite';
+import { telSalesOrder, telError } from './telegram';
 
 import type { PushData, OrderRequest, OrderResponse } from '../types/shopee';
-import type { StageSalesOrder } from '../types/ecommerce';
+import type { StageSalesOrder, Ecommerce, Handler } from '../types/ecommerce';
+import type { SalesOrderRes } from '../types/vuanem-netsuite-types/salesOrder';
 
-const get = async (
+const shopeeApp = {
+  partnerId: Number(process.env.SHOPEE_PARTNER_ID) || 1004299,
+  apiKey:
+    process.env.SHOPEE_API_KEY ||
+    '56fb6e4fde4be760000e1b0d0f04ed741c5433947abd261f5e80b92aef100452',
+};
+
+const shopeeEcommerce: Ecommerce = {
+  name: 'Shopee',
+  orderPaymentMethod: 41,
+  location: 787,
+  employee: 915575,
+  partner: 915574,
+};
+
+const getOrderDetail = async (
   req: OrderRequest
 ): Promise<[unknown | null, OrderResponse | null]> => {
   try {
-    const { data } = await axios.get(
+    const { data } = await axios.post(
       'https://partner.shopeemobile.com/api/v1/orders/detail',
       { params: req }
     );
@@ -21,7 +38,9 @@ const get = async (
   }
 };
 
-const build = ({ orders }: OrderResponse): StageSalesOrder => {
+export const buildStageSalesOrder = ({
+  orders,
+}: OrderResponse): StageSalesOrder => {
   const order = orders[0];
   return {
     customerInfo: {
@@ -29,12 +48,7 @@ const build = ({ orders }: OrderResponse): StageSalesOrder => {
       phone: order.recipient_address.phone,
       address: order.recipient_address.full_address,
     },
-    ecommerce: {
-      orderPaymentMethod: 41,
-      location: 787,
-      employee: 11,
-      partner: 11,
-    },
+    ecommerce: shopeeEcommerce,
     items: order.items.map(
       ({ variation_sku, variation_quantity_purchased }) => ({
         itemid: variation_sku,
@@ -47,27 +61,46 @@ const build = ({ orders }: OrderResponse): StageSalesOrder => {
 const create = async ({
   shop_id,
   data,
-}: PushData): Promise<StageSalesOrder | null> => {
-  const [errOrderDetail, orderDetail] = await get({
+  timestamp,
+}: PushData): Promise<[unknown | null, SalesOrderRes | null]> => {
+  const [errOrderDetail, orderDetail] = await getOrderDetail({
     shopid: shop_id,
-    partner_id: 123,
+    partner_id: shopeeApp.partnerId,
     ordersn_list: [data.ordersn],
-    timestamp: data.timestamp,
+    timestamp,
   });
   if (errOrderDetail || !orderDetail) {
-    return null;
+    return [errOrderDetail, orderDetail as null];
   }
-  return createSalesOrder(build(orderDetail));
+  const [errTask, task] = await createSalesOrder(
+    buildStageSalesOrder(orderDetail)
+  );
+  return [errTask, task];
 };
 
-const handler = async (data: PushData) => {
-  const {code, data: { status }} = data
+const shopeeHandle: Handler = async (data, res) => {
+  const {
+    code,
+    data: { status },
+  } = data;
   if (code !== 3) {
-    return null;
+    res.status(200).send({ data: 'ok' });
   }
   if (status === 'UNPAID') {
-    create(data)
+    const [errTask, task] = await create(data);
+    if (errTask || !task) {
+      telError({
+        name: shopeeEcommerce.name,
+        message: JSON.stringify(errTask),
+      });
+      res.status(500).send({ data: 'not ok' });
+    } else {
+      telSalesOrder({
+        name: shopeeEcommerce.name,
+        salesOrder: task,
+      });
+    }
   }
 };
 
-export default handler;
+export default shopeeHandle;
