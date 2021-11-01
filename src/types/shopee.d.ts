@@ -12,7 +12,7 @@ export type PushData = {
 };
 
 export type OrderRequest = {
-  ordersn_list: Array<string>;
+  ordersn_list: string[];
   partner_id: number;
   shopid: number;
   timestamp: number;
@@ -63,16 +63,12 @@ export type Order = {
   total_amount: string;
   escrow_amount: string;
   order_status: string;
-  shipping_carrier: string;
-  checkout_shipping_carrier: string;
-  payment_method: string;
-  goods_to_declare: boolean;
   message_to_seller: string;
   note: string;
   note_update_time: boolean;
   create_time: number;
   update_time: number;
-  items: Array<orderItem>;
+  items: OrderItem[];
   pay_time: number;
   buyer_cancel_reason: string;
   cancel_by: string;
@@ -83,5 +79,5 @@ export type Order = {
 
 export type OrderResponse = {
   request_id: string;
-  orders: Array<Order>;
+  orders: Order[];
 };

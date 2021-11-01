@@ -1,23 +1,30 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 
-import type OrderPaymentMethod from './vuanem-netsuite-types/orderPaymentMethod'
+import * as OrderPaymentMethod from './vuanem-netsuite-types/orderPaymentMethod';
+import * as Location from './vuanem-netsuite-types/location';
+import * as Shopee from './shopee'
 
-type Ecommerce = {
-    orderPaymentMethod: OrderPaymentMethod,
-    location: number;
-    employee: number
-}
+export type Ecommerce = {
+  orderPaymentMethod: OrderPaymentMethod.OrderPaymentMethod;
+  location: Location.Location;
+  employee: number;
+  partner: number
+};
 
-type Customer = {
-    name: string,
-    phone: string,
-    town: string,
-    district: string,
-    city: string,
-    full_address: string
+export type CustomerInfo = {
+  name: string;
+  phone: string;
+  address: string;
+};
 
-}
 export type StageSalesOrder = {
-    customer: Customer,
-    ecommerce: Ecommerce
-}
+  customerInfo: CustomerInfo;
+  ecommerce: Ecommerce;
+  items: {
+    itemid: string;
+    quantity: number;
+  }[];
+};
+
+export type Handler = (data: Shopee.PushData) => StageSalesOrder;

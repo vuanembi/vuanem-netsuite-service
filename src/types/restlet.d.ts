@@ -4,3 +4,7 @@ export type RestletOptions = {
 };
 
 export type RestletMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
+export type FunctionReturn = {
+  data: number;
+};

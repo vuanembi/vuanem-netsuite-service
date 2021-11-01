@@ -22,6 +22,12 @@ const oauth = OAuth({
 });
 
 const axClient = axios.create();
+axClient.interceptors.response.use((res) => {
+  const {
+    data: { data },
+  } = res;
+  return data;
+});
 
 const requestRestlet = (
   { script, deploy }: RestletOptions,

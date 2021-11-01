@@ -5,6 +5,7 @@
   "author": "HM <hieumdd@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@types/express": "^4.17.13",
     "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
@@ -17,6 +18,7 @@
   "dependencies": {
     "axios": "^0.24.0",
     "dotenv": "^10.0.0",
+    "express": "^4.17.1",
     "oauth-1.0a": "^2.2.6"
   }
 }
