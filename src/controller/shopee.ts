@@ -50,6 +50,9 @@ export const buildStageSalesOrder = ({
       address: order.recipient_address.full_address,
     },
     ecommerce: shopeeEcommerce,
+    origins: {
+      orderId: order.ordersn,
+    },
     items: order.items.map(
       ({ variation_sku, variation_quantity_purchased }) => ({
         itemid: variation_sku,
