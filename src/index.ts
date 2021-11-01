@@ -58,7 +58,7 @@ export const main: HttpFunction = (req, res) => {
   if (method === 'GET') {
     defaultController(res);
   } else if (method === 'POST') {
-    if (path === 'shopee') {
+    if (path === '/shopee') {
       shopeeHandle(body, res);
     } else {
       defaultController(res);
