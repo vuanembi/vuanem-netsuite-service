@@ -1,6 +1,8 @@
 /* eslint-disable camelcase */
 
+
 import axios from 'axios';
+const crypto = require('crypto');
 
 import createSalesOrder from './netsuite';
 import { defaultController } from './common';
@@ -9,6 +11,18 @@ import { telSalesOrder, telError } from './telegram';
 import type { PushData, OrderRequest, OrderResponse } from '../types/shopee';
 import type { StageSalesOrder, Ecommerce, Handler } from '../types/ecommerce';
 import type { SalesOrderRes } from '../types/vuanem-netsuite-types/salesOrder';
+
+const axClient = axios.create({
+  baseURL: 'https://partner.shopeemobile.com/api/v1/',
+});
+axClient.interceptors.request.use((req) => {
+  const signatureBase = `${req.url}|${JSON.stringify(req.data)}`;
+  req.headers = {
+    ...req.headers,
+    Authorization: crypto.sign("SHA256", Buffer.from(signatureBase) , process.env.SHOPEE_PRIVATE_KEY || '').toString('hex')
+  };
+  return req
+})
 
 const shopeeApp = {
   partnerId: Number(process.env.SHOPEE_PARTNER_ID) || 1004299,
