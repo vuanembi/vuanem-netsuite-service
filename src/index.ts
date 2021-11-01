@@ -51,6 +51,8 @@ import shopeeHandle from './controller/shopee';
 // });
 
 export const main: HttpFunction = (req, res) => {
+  console.log(JSON.stringify(req));
+
   if (req.method === 'GET') {
     res.status(200).send({ status: 'ok' });
   } else if (req.method === 'POST') {
