@@ -11,7 +11,7 @@ parserOptions:
   project: "./tsconfig.json"
 plugins:
   - "@typescript-eslint"
-rules: { "import/extensions": "never", "prefer-const": 0 }
+rules: { "import/extensions": "never", "prefer-const": 0, "no-console": 0 }
 settings:
   import/resolver:
     node:
