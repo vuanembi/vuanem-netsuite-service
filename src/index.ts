@@ -53,7 +53,7 @@ import shopeeHandle from './controller/shopee';
 
 export const main: HttpFunction = (req, res) => {
   const { path, method, params, body } = req;
-  console.log({ path, method, params, body });
+  console.log(JSON.stringify({ path, method, params, body }));
 
   if (method === 'GET') {
     defaultController(res);
