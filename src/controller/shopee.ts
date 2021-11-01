@@ -96,10 +96,11 @@ const shopeeController: Handler = async (data, res) => {
         });
         res.status(500).send({ data: 'not ok' });
       } else {
-        telSalesOrder({
+        const results = {
           name: shopeeEcommerce.name,
           salesOrder: task,
-        });
+        };
+        telSalesOrder(results);
       }
     } else {
       defaultController(res);
