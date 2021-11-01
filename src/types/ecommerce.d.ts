@@ -19,5 +19,5 @@ type Customer = {
 }
 export type StageSalesOrder = {
     customer: Customer,
-
+    ecommerce: Ecommerce
 }
