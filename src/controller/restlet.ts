@@ -33,7 +33,13 @@ const requestRestlet = (
   { script, deploy }: RestletOptions,
   method: RestletMethod
 ) => {
-  const request = async ({ params, body }: { params?: any; body?: any }) => {
+  const request = async ({
+    params,
+    body,
+  }: {
+    params?: any;
+    body?: any;
+  }): Promise<[unknown | null, any | null]> => {
     const requestParams = new URLSearchParams({
       script,
       deploy,
@@ -45,7 +51,7 @@ const requestRestlet = (
         {
           method,
           url: requestURL,
-          data: body,
+          body,
         },
         {
           key: process.env.ACCESS_TOKEN,
@@ -54,13 +60,13 @@ const requestRestlet = (
       )
     );
     try {
-      const { data } = await axClient.request({
+      const res = await axClient.request({
         method,
         headers,
         url: requestURL,
         data: body,
       });
-      return [null, data];
+      return [null, res];
     } catch (err) {
       return [err, null];
     }
