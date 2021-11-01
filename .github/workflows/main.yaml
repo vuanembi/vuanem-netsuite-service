@@ -1,0 +1,59 @@
+name: CI/CD
+on:
+  push:
+    branches:
+     - master
+     - dev
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Setup node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: 'yarn'
+
+      - name: Install dependencies 
+        run: yarn install
+
+      - name: Typescript
+        run: tsc
+
+      - name: Copy lock files
+        run: |
+          cp src/package.json dist/package.json
+          cp src/yarn.lock dist/yarn.lock
+
+      - name: Set env vars (dev)
+        if: endsWith(github.ref, '/dev')
+        run: |
+          echo "FUNCTION_NAME=vuanem-netsuite-service-dev" >> $GITHUB_ENV
+
+      - name: Set env vars (prod)
+        if: endsWith(github.ref, '/master')
+        run: |
+          echo "FUNCTION_NAME=vuanem-netsuite-service-dev" >> $GITHUB_ENV
+
+      - name: Deploy      
+        uses: google-github-actions/deploy-cloud-functions@main
+        with:
+          name: ${{ env.FUNCTION_NAME }}
+          runtime: nodejs14
+          memory_mb: 1024MB,
+          source_dir: dist
+          credentials: ${{ secrets.GCP_SA_KEY }}
+          service_account_email: ${{ secrets.GCP_SA }}
+          env-vars: ACCOUNT_ID=${{ secrets.ACCOUNT_ID }},\
+            CONSUMER_KEY=${{ secrets.CONSUMER_KEY }},\
+            CONSUMER_SECRET=${{ secrets.CONSUMER_SECRET }},\
+            ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }},\
+            TOKEN_SECRET=${{ secrets.TOKEN_SECRET }},\
+            TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}
