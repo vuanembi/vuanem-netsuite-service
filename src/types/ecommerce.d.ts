@@ -1,7 +1,9 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 
 import * as OrderPaymentMethod from './vuanem-netsuite-types/orderPaymentMethod';
 import * as Location from './vuanem-netsuite-types/location';
+import * as Shopee from './shopee'
 
 export type Ecommerce = {
   orderPaymentMethod: OrderPaymentMethod.OrderPaymentMethod;
@@ -24,3 +26,5 @@ export type StageSalesOrder = {
     quantity: number;
   }[];
 };
+
+export type Handler = (data: Shopee.PushData) => StageSalesOrder;

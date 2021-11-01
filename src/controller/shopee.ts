@@ -2,10 +2,12 @@
 
 import axios from 'axios';
 
+import createSalesOrder from './netsuite';
+
 import type { PushData, OrderRequest, OrderResponse } from '../types/shopee';
 import type { StageSalesOrder } from '../types/ecommerce';
 
-const getShopeeOrder = async (
+const get = async (
   req: OrderRequest
 ): Promise<[unknown | null, OrderResponse | null]> => {
   try {
@@ -19,7 +21,7 @@ const getShopeeOrder = async (
   }
 };
 
-const buildShopeeSalesOrder = ({ orders }: OrderResponse): StageSalesOrder => {
+const build = ({ orders }: OrderResponse): StageSalesOrder => {
   const order = orders[0];
   return {
     customerInfo: {
@@ -42,15 +44,11 @@ const buildShopeeSalesOrder = ({ orders }: OrderResponse): StageSalesOrder => {
   };
 };
 
-const shopeeHandler = async ({
-  code,
+const create = async ({
   shop_id,
   data,
 }: PushData): Promise<StageSalesOrder | null> => {
-  if (code !== 3) {
-    return null;
-  }
-  const [errOrderDetail, orderDetail] = await getShopeeOrder({
+  const [errOrderDetail, orderDetail] = await get({
     shopid: shop_id,
     partner_id: 123,
     ordersn_list: [data.ordersn],
@@ -59,7 +57,17 @@ const shopeeHandler = async ({
   if (errOrderDetail || !orderDetail) {
     return null;
   }
-  return buildShopeeSalesOrder(orderDetail);
+  return createSalesOrder(build(orderDetail));
 };
 
-export default shopeeHandler
+const handler = async (data: PushData) => {
+  const {code, data: { status }} = data
+  if (code !== 3) {
+    return null;
+  }
+  if (status === 'UNPAID') {
+    create(data)
+  }
+};
+
+export default handler;

@@ -2,7 +2,7 @@ import * as rl from './restlet';
 import type { CustomerInfo, StageSalesOrder } from '../types/ecommerce';
 import type { RestletOptions } from '../types/restlet';
 import type { CustomerRecord } from '../types/vuanem-netsuite-types/customer';
-import type { SalesOrderRecord } from '../types/vuanem-netsuite-types/salesOrder'
+import type { SalesOrderRecord } from '../types/vuanem-netsuite-types/salesOrder';
 import type { InventoryItemSearch } from '../types/vuanem-netsuite-types/inventoryItem';
 
 const SalesOrder: RestletOptions = {
@@ -17,6 +17,7 @@ const InventoryItem: RestletOptions = {
   script: 1101,
   deploy: 1,
 };
+
 
 const createCustomerIfNotExist = async (data: CustomerInfo) => {
   const [errCustomer, customer] = await rl.get(Customer)({
@@ -34,7 +35,7 @@ const createCustomerIfNotExist = async (data: CustomerInfo) => {
       });
 };
 
-const mapSKUToItemID = async ({itemid}: InventoryItemSearch) => {
+const mapSKUToItemID = async ({ itemid }: InventoryItemSearch) => {
   const [errItem, item] = await rl.get(InventoryItem)({
     params: { itemid },
   });
@@ -46,10 +47,7 @@ const createSalesOrder = async ({
   ecommerce,
   items,
 }: StageSalesOrder) => {
-  const [errCustomer, customer] = await createCustomerIfNotExist(customerInfo);
-  if (errCustomer || !customer) {
-    console.log('err');
-  }
+  const [, customer] = await createCustomerIfNotExist(customerInfo);
   const salesOrderRecord: SalesOrderRecord = {
     entity: customer.id,
     custbody_customer_phone: customer.phone,
@@ -75,9 +73,6 @@ const createSalesOrder = async ({
   const [errSalesOrder, salesOrder] = await rl.post(SalesOrder)({
     body: salesOrderRecord,
   });
-  if (errSalesOrder) {
-    console.log(errSalesOrder);
-  }
   return salesOrder;
 };
 
