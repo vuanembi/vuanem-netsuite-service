@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 import type { HttpFunction } from '@google-cloud/functions-framework/build/src/functions';
 import shopeeHandle from './controller/shopee';
 
@@ -48,7 +50,7 @@ import shopeeHandle from './controller/shopee';
 //   }
 // });
 
-const main: HttpFunction = (req, res) => {
+export const main: HttpFunction = (req, res) => {
   if (req.method === 'GET') {
     res.status(200).send({ status: 'ok' });
   } else if (req.method === 'POST') {
@@ -57,5 +59,3 @@ const main: HttpFunction = (req, res) => {
     }
   }
 };
-
-export default main;

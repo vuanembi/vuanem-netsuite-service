@@ -25,12 +25,12 @@ jobs:
         run: yarn install
 
       - name: Typescript
-        run: tsc
+        run: tsc --sourceMap false
 
       - name: Copy lock files
         run: |
-          cp src/package.json dist/package.json
-          cp src/yarn.lock dist/yarn.lock
+          cp package.json dist/package.json
+          cp yarn.lock dist/yarn.lock
 
       - name: Set env vars (dev)
         if: endsWith(github.ref, '/dev')
@@ -42,18 +42,23 @@ jobs:
         run: |
           echo "FUNCTION_NAME=vuanem-netsuite-service-dev" >> $GITHUB_ENV
 
-      - name: Deploy      
-        uses: google-github-actions/deploy-cloud-functions@main
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.0
         with:
-          name: ${{ env.FUNCTION_NAME }}
-          runtime: nodejs14
-          memory_mb: 1024MB,
-          source_dir: dist
-          credentials: ${{ secrets.GCP_SA_KEY }}
-          service_account_email: ${{ secrets.GCP_SA }}
-          env-vars: ACCOUNT_ID=${{ secrets.ACCOUNT_ID }},\
-            CONSUMER_KEY=${{ secrets.CONSUMER_KEY }},\
-            CONSUMER_SECRET=${{ secrets.CONSUMER_SECRET }},\
-            ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }},\
-            TOKEN_SECRET=${{ secrets.TOKEN_SECRET }},\
-            TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Deploy to Cloud Functions
+        run: >-
+          gcloud functions deploy ${{ env.FUNCTION_NAME }}
+          --entry-point=main
+          --region=us-central1
+          --timeout=240
+          --project=${{ secrets.PROJECT_ID }}
+          --memory=512MB
+          --runtime=nodejs14
+          --trigger-http
+          --source=dist
+          --allow-unauthenticated
+          --service-account=${{ secrets.GCP_SA }}
+          --set-env-vars=ACCOUNT_ID=${{ secrets.ACCOUNT_ID }},CONSUMER_KEY=${{ secrets.CONSUMER_KEY }},CONSUMER_SECRET=${{ secrets.CONSUMER_SECRET }},ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }},TOKEN_SECRET=${{ secrets.TOKEN_SECRET }},TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}
