@@ -1,8 +1,16 @@
+import * as dayjs from 'dayjs';
+
 import * as rl from './restlet';
 import type { CustomerInfo, StageSalesOrder } from '../types/ecommerce';
 import type { RestletOptions } from '../types/restlet';
-import type { CustomerRecord } from '../types/vuanem-netsuite-types/customer';
-import type { SalesOrderRecord } from '../types/vuanem-netsuite-types/salesOrder';
+import type {
+  CustomerRecord,
+  CustomerRes,
+} from '../types/vuanem-netsuite-types/customer';
+import type {
+  SalesOrderRecord,
+  SalesOrderRes,
+} from '../types/vuanem-netsuite-types/salesOrder';
 import type { InventoryItemSearch } from '../types/vuanem-netsuite-types/inventoryItem';
 
 const SalesOrder: RestletOptions = {
@@ -18,8 +26,9 @@ const InventoryItem: RestletOptions = {
   deploy: 1,
 };
 
-
-const createCustomerIfNotExist = async (data: CustomerInfo) => {
+const createCustomerIfNotExist = async (
+  data: CustomerInfo
+): Promise<[unknown | null, CustomerRes | null]> => {
   const [errCustomer, customer] = await rl.get(Customer)({
     params: { phone: data.phone },
   });
@@ -27,7 +36,6 @@ const createCustomerIfNotExist = async (data: CustomerInfo) => {
     ? [errCustomer, customer]
     : rl.post(Customer)({
         body: {
-          leadsource: 144506,
           phone: data.phone,
           custentity_employee_record_reference: 1444,
           firstname: data.name,
@@ -46,34 +54,55 @@ const createSalesOrder = async ({
   customerInfo,
   ecommerce,
   items,
-}: StageSalesOrder) => {
-  const [, customer] = await createCustomerIfNotExist(customerInfo);
+}: StageSalesOrder): Promise<[unknown | null, SalesOrderRes | null]> => {
+  const [errCustomer, customer] = await createCustomerIfNotExist(customerInfo);
+  if (errCustomer || !customer) {
+    return [errCustomer, null];
+  }
   const salesOrderRecord: SalesOrderRecord = {
-    entity: customer.id,
-    custbody_customer_phone: customer.phone,
-    shipdate: '2021-01-01',
-    custbody_exepected_shipping_method: 1,
-    custbody_expecteddeliverytime: 4,
-    custbody_recipient: customer.name,
-    custbody_recipient_phone: customer.phone,
+    shipdate: dayjs().format('YYYY-MM-DD'),
+    trandate: dayjs().add(7, 'days').format('YYYY-MM-DD'),
+
+    // NetSuite Customer
+    entity: Number(customer.id),
+    custbody_customer_phone: customer.values.phone,
+    custbody_recipient_phone: customer.values.phone,
+
+    // Ecommerce Customer
+    custbody_recipient: customerInfo.name,
     shippingaddress: {
-      addressee: customer.name,
+      addressee: customerInfo.address,
       country: 238,
     },
+
+    // Ecommerce
     custbody_order_payment_method: ecommerce.orderPaymentMethod,
-    trandate: '2021-01-01',
     salesrep: ecommerce.employee,
-    leadsource: 144506,
-    custbody5: 1,
     partner: ecommerce.partner,
-    subsidiary: 1,
     location: ecommerce.location,
-    item: await Promise.all(items.map(async (i) => mapSKUToItemID(i))),
+
+    // NetSuite Items
+    item: await Promise.all(
+      items.map(async (i) => {
+        const { id } = await mapSKUToItemID(i);
+        return {
+          item: id,
+          quantity: i.quantity,
+        };
+      })
+    ),
+
+    // Defaults
+    leadsource: 144506,
+    custbody_exepected_shipping_method: 1,
+    custbody_expecteddeliverytime: 4,
+    custbody5: 1,
+    subsidiary: 1,
   };
   const [errSalesOrder, salesOrder] = await rl.post(SalesOrder)({
     body: salesOrderRecord,
   });
-  return salesOrder;
+  return [errSalesOrder, salesOrder];
 };
 
 export default createSalesOrder;
