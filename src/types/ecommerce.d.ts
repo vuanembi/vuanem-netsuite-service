@@ -3,14 +3,14 @@
 import { Response } from 'express';
 import * as OrderPaymentMethod from './vuanem-netsuite-types/orderPaymentMethod';
 import * as Location from './vuanem-netsuite-types/location';
-import * as Shopee from './shopee'
+import * as Shopee from './shopee';
 
 export type Ecommerce = {
-  name: string,
+  name: string;
   orderPaymentMethod: OrderPaymentMethod.OrderPaymentMethod;
   location: Location.Location;
   employee: number;
-  partner: number
+  partner: number;
 };
 
 export type CustomerInfo = {
@@ -22,6 +22,9 @@ export type CustomerInfo = {
 export type StageSalesOrder = {
   customerInfo: CustomerInfo;
   ecommerce: Ecommerce;
+  origins: {
+    orderId: string;
+  };
   items: {
     itemid: string;
     quantity: number;

@@ -53,6 +53,7 @@ const mapSKUToItemID = async ({ itemid }: InventoryItemSearch) => {
 const createSalesOrder = async ({
   customerInfo,
   ecommerce,
+  origins,
   items,
 }: StageSalesOrder): Promise<[unknown | null, SalesOrderRes | null]> => {
   const [errCustomer, customer] = await createCustomerIfNotExist(customerInfo);
@@ -80,6 +81,7 @@ const createSalesOrder = async ({
     salesrep: ecommerce.employee,
     partner: ecommerce.partner,
     location: ecommerce.location,
+    memo: `${ecommerce.name}-${origins.orderId} :: TEST TEST TEST TEST`,
 
     // NetSuite Items
     item: await Promise.all(
