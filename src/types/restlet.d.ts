@@ -5,6 +5,7 @@ export type RestletOptions = {
 
 export type RestletMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-export type FunctionReturn = {
-  data: number;
+export type RestletQuery = {
+  params?: Record<string, any>;
+  body?: Record<string, any>;
 };

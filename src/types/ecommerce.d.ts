@@ -13,14 +13,14 @@ export type Ecommerce = {
   partner: number;
 };
 
-export type CustomerInfo = {
+export type Customer = {
   name: string;
   phone: string;
   address: string;
 };
 
-export type StageSalesOrder = {
-  customerInfo: CustomerInfo;
+export type SalesOrder = {
+  customerInfo: Customer;
   ecommerce: Ecommerce;
   origins: {
     orderId: string;
