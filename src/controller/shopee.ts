@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 
-
 import axios from 'axios';
 const crypto = require('crypto');
 
@@ -13,16 +12,31 @@ import type { StageSalesOrder, Ecommerce, Handler } from '../types/ecommerce';
 import type { SalesOrderRes } from '../types/vuanem-netsuite-types/salesOrder';
 
 const axClient = axios.create({
-  baseURL: 'https://partner.shopeemobile.com/api/v1/',
+  baseURL:
+    process.env.NODE_ENV === 'prod'
+      ? 'https://partner.shopeemobile.com/api/v1/'
+      : 'https://partner.test-stable.shopeemobile.com/api/v1/',
 });
 axClient.interceptors.request.use((req) => {
-  const signatureBase = `${req.url}|${JSON.stringify(req.data)}`;
+  const hmac = crypto.createHmac(
+    'sha256',
+    process.env.SHOPEE_API_KEY ??
+      '56fb6e4fde4be760000e1b0d0f04ed741c5433947abd261f5e80b92aef100452'
+  );
+  const x = `${req.baseURL}${req.url}|${JSON.stringify(req.data)}`;
+  hmac.update(`${req.baseURL}${req.url}|${JSON.stringify(req.data)}`);
   req.headers = {
     ...req.headers,
-    Authorization: crypto.sign("SHA256", Buffer.from(signatureBase) , process.env.SHOPEE_PRIVATE_KEY || '').toString('hex')
+    Authorization: hmac.digest('hex'),
   };
-  return req
-})
+  return req;
+});
+axClient.interceptors.response.use((res) => {
+  if (res.data.errors.length === 0) {
+    return res;
+  }
+  throw new Error();
+});
 
 const shopeeApp = {
   partnerId: Number(process.env.SHOPEE_PARTNER_ID) || 1004299,
@@ -43,10 +57,7 @@ const getOrderDetail = async (
   req: OrderRequest
 ): Promise<[unknown | null, OrderResponse | null]> => {
   try {
-    const { data } = await axios.post(
-      'https://partner.shopeemobile.com/api/v1/orders/detail',
-      { params: req }
-    );
+    const { data } = await axClient.post('orders/detail', { ...req });
     return [null, data];
   } catch (err) {
     return [err, null];
@@ -109,13 +120,13 @@ const shopeeController: Handler = async (data, res) => {
       if (errTask || !task) {
         telError({
           name: shopeeEcommerce.name,
-          message: JSON.stringify(errTask),
+          message: (errTask as Error).message,
         });
         res.status(500).send({ data: 'not ok' });
       } else {
         const results = {
           name: shopeeEcommerce.name,
-          salesOrder: task,
+          salesOrder: Number(task.id),
         };
         telSalesOrder(results);
       }
