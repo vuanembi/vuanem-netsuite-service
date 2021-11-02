@@ -25,10 +25,12 @@ export type StageSalesOrder = {
   origins: {
     orderId: string;
   };
-  items: {
-    itemid: string;
-    quantity: number;
-  }[];
+  items: Item[];
+};
+
+export type Item = {
+  itemid: string;
+  quantity: number;
 };
 
 export type Handler = (data: Shopee.PushData, res: Response) => void;
