@@ -1,7 +1,14 @@
-import * as dotenv from 'dotenv';
 import axios from 'axios';
-import { URLSearchParams } from "url"
-import type { RestletOptions, RestletMethod } from '../types/restlet';
+import * as dotenv from 'dotenv';
+import { URLSearchParams } from 'url';
+
+import type { RestletRes } from '../types/vuanem-netsuite-types/record'
+import type {
+  RestletOptions,
+  RestletMethod,
+  RestletQuery,
+} from '../types/restlet';
+import type { PromiseSideEffect } from '../types/common';
 
 dotenv.config();
 
@@ -23,27 +30,18 @@ const oauth = OAuth({
 });
 
 const axClient = axios.create();
-axClient.interceptors.response.use((res) => {
-  const {
-    data: { data },
-  } = res;
-  return data;
-});
 
 const requestRestlet = (
   { script, deploy }: RestletOptions,
   method: RestletMethod
 ) => {
-  const request = async ({
+  const request: PromiseSideEffect<RestletQuery, RestletRes> = async ({
     params,
     body,
-  }: {
-    params?: any;
-    body?: any;
-  }): Promise<[unknown | null, any | null]> => {
+  }) => {
     const requestParams = new URLSearchParams({
-      script,
-      deploy,
+      script: script.toString(),
+      deploy: deploy.toString(),
       ...params,
     });
     const requestURL = `${BASE_URL}?${requestParams.toString()}`;
@@ -61,13 +59,13 @@ const requestRestlet = (
       )
     );
     try {
-      const res = await axClient.request({
+      const { data } = await axClient.request({
         method,
         headers,
         url: requestURL,
         data: body,
       });
-      return [null, res];
+      return [null, data];
     } catch (err) {
       return [err, null];
     }

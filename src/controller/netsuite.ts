@@ -2,8 +2,8 @@ import * as dayjs from 'dayjs';
 
 import * as rl from './restlet';
 import type { PromiseSideEffect } from '../types/common';
-import type { Item, CustomerInfo, StageSalesOrder } from '../types/ecommerce';
-import type { RestletOptions } from '../types/restlet';
+import type * as ecommerce from '../types/ecommerce'
+import type { RestletQuery, RestletOptions } from '../types/restlet';
 import type {
   CustomerRecord,
   CustomerRes,
@@ -17,7 +17,7 @@ import type {
   InventoryItemSearch,
   InventoryItemRes,
 } from '../types/vuanem-netsuite-types/inventoryItem';
-import { KeyFormat } from 'crypto';
+import { RestletRes } from '../types/vuanem-netsuite-types/record';
 
 const SalesOrder: RestletOptions = {
   script: 997,
@@ -32,7 +32,7 @@ const InventoryItem: RestletOptions = {
   deploy: 1,
 };
 
-const createCustomerIfNotExist: PromiseSideEffect<CustomerInfo, CustomerRes> =
+const createCustomerIfNotExist: PromiseSideEffect<ecommerce.Customer, CustomerRes> =
   async (data) => {
     const [errCustomer, customer] = await rl.get(Customer)({
       params: { phone: data.phone },
@@ -56,9 +56,9 @@ const mapSKUToItemID: PromiseSideEffect<InventoryItemSearch, InventoryItemRes> =
     return [errItem, item];
   };
 
-const mapSKUs = async (items: Item[]) =>
+const mapSKUs = async (items: ecommerce.Item[]) =>
   Promise.all(
-    items.map(async (i: Item) => {
+    items.map(async (i: ecommerce.Item) => {
       const [errItem, item] = await mapSKUToItemID(i);
       return errItem && item !== null
         ? {
@@ -69,7 +69,7 @@ const mapSKUs = async (items: Item[]) =>
     })
   );
 
-const createSalesOrder: PromiseSideEffect<StageSalesOrder, SalesOrderRes> =
+const createSalesOrder: PromiseSideEffect<ecommerce.SalesOrder, SalesOrderRes> =
   async ({ customerInfo, ecommerce, origins, items }) => {
     const [[errCustomer, customer], itemRaw] = await Promise.all([
       createCustomerIfNotExist(customerInfo),

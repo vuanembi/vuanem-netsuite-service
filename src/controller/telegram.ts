@@ -1,23 +1,19 @@
 import axios from 'axios';
 import * as dotenv from 'dotenv';
 
-import type {
-  Composer,
-  TelegramSalesOrder,
-  TelegramError,
-} from '../types/telegram';
+import type { Composer, SuccessOptions, ErrorOptions } from '../types/telegram';
 
 dotenv.config();
 
-const composeMessage = (options: TelegramSalesOrder) => `__${options.name}__
+const composeMessage = (options: SuccessOptions) => `__${options.name}__
 Tạo đơn hàng thành công
 [Sales Order](https://${process.env.ACCOUNT_ID}.app.netsuite.com/app/accounting/transactions/salesord.nl?id=${options.salesOrder})`;
 
-const composeError = ({ name, message }: TelegramError) =>
+const composeError = ({ name, message }: ErrorOptions) =>
   `Error at ${name}: ${message}`;
 
 const sendMessage = (composer: Composer) => {
-  const send = async (options: TelegramSalesOrder | TelegramError) => {
+  const send = async (options: SuccessOptions | ErrorOptions) => {
     try {
       const { data } = await axios.post(
         `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`,

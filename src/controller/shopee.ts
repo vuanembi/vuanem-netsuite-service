@@ -7,8 +7,9 @@ import createSalesOrder from './netsuite';
 import { defaultController } from './common';
 import { telSalesOrder, telError } from './telegram';
 
+import type { PromiseSideEffect } from '../types/common';
+import type * as ecommerce from '../types/ecommerce';
 import type { PushData, OrderRequest, OrderResponse } from '../types/shopee';
-import type { StageSalesOrder, Ecommerce, Handler } from '../types/ecommerce';
 import type { SalesOrderRes } from '../types/vuanem-netsuite-types/salesOrder';
 
 const axClient = axios.create({
@@ -20,10 +21,9 @@ const axClient = axios.create({
 axClient.interceptors.request.use((req) => {
   const hmac = crypto.createHmac(
     'sha256',
-    process.env.SHOPEE_API_KEY ??
+    process.env.SHOPEE_API_KEY ||
       '56fb6e4fde4be760000e1b0d0f04ed741c5433947abd261f5e80b92aef100452'
   );
-  const x = `${req.baseURL}${req.url}|${JSON.stringify(req.data)}`;
   hmac.update(`${req.baseURL}${req.url}|${JSON.stringify(req.data)}`);
   req.headers = {
     ...req.headers,
@@ -38,14 +38,7 @@ axClient.interceptors.response.use((res) => {
   throw new Error();
 });
 
-const shopeeApp = {
-  partnerId: Number(process.env.SHOPEE_PARTNER_ID) || 1004299,
-  apiKey:
-    process.env.SHOPEE_API_KEY ||
-    '56fb6e4fde4be760000e1b0d0f04ed741c5433947abd261f5e80b92aef100452',
-};
-
-const shopeeEcommerce: Ecommerce = {
+const shopeeEcommerce: ecommerce.Ecommerce = {
   name: 'Shopee',
   orderPaymentMethod: 41,
   location: 787,
@@ -53,9 +46,9 @@ const shopeeEcommerce: Ecommerce = {
   partner: 915574,
 };
 
-const getOrderDetail = async (
-  req: OrderRequest
-): Promise<[unknown | null, OrderResponse | null]> => {
+const getOrderDetail: PromiseSideEffect<OrderRequest, OrderResponse> = async (
+  req
+) => {
   try {
     const { data } = await axClient.post('orders/detail', { ...req });
     return [null, data];
@@ -66,7 +59,7 @@ const getOrderDetail = async (
 
 export const buildStageSalesOrder = ({
   orders,
-}: OrderResponse): StageSalesOrder => {
+}: OrderResponse): ecommerce.SalesOrder => {
   const order = orders[0];
   return {
     customerInfo: {
@@ -87,18 +80,19 @@ export const buildStageSalesOrder = ({
   };
 };
 
-const create = async ({
+const create: PromiseSideEffect<PushData, SalesOrderRes> = async ({
   shop_id,
   data,
   timestamp,
-}: PushData): Promise<[unknown | null, SalesOrderRes | null]> => {
+}) => {
   const [errOrderDetail, orderDetail] = await getOrderDetail({
     shopid: shop_id,
-    partner_id: shopeeApp.partnerId,
+    partner_id: Number(process.env.SHOPEE_PARTNER_ID) || 1004299,
     ordersn_list: [data.ordersn],
     timestamp,
   });
   if (errOrderDetail || !orderDetail) {
+    console.log(errOrderDetail);
     return [errOrderDetail, orderDetail as null];
   }
   const [errTask, task] = await createSalesOrder(
@@ -107,7 +101,7 @@ const create = async ({
   return [errTask, task];
 };
 
-const shopeeController: Handler = async (data, res) => {
+const shopeeController: ecommerce.Handler = async (data, res) => {
   const {
     code,
     data: { status },
@@ -118,6 +112,7 @@ const shopeeController: Handler = async (data, res) => {
     if (status === 'UNPAID') {
       const [errTask, task] = await create(data);
       if (errTask || !task) {
+        console.log(errTask);
         telError({
           name: shopeeEcommerce.name,
           message: (errTask as Error).message,
