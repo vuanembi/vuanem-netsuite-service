@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 
+import { URLSearchParams } from 'url';
 import axios from 'axios';
 const crypto = require('crypto');
 
@@ -19,24 +20,25 @@ const axClient = axios.create({
       : 'https://api.lazada.vn/rest',
 });
 axClient.interceptors.request.use((req) => {
-  const hmac = crypto.createHmac(
-    'sha256',
-    process.env.SHOPEE_API_KEY ||
-      '56fb6e4fde4be760000e1b0d0f04ed741c5433947abd261f5e80b92aef100452'
+  const hmac = crypto.createHmac('sha256', process.env.LAZADA_API_KEY || '');
+  const sortedParams = new URLSearchParams(
+    Object.keys(req.params)
+      .sort()
+      .reduce((result: any, key: string) => {
+        result[key] = req.params[key];
+        return result;
+      }, {})
   );
-  hmac.update(`${req.baseURL}${req.url}|${JSON.stringify(req.data)}`);
-  req.headers = {
-    ...req.headers,
-    Authorization: hmac.digest('hex'),
+  const sign = hmac
+    .update(`${req.url}?${sortedParams.toString()}`)
+    .digest('hex');
+  req.params = {
+    ...req.params,
+    sign,
   };
   return req;
 });
-axClient.interceptors.response.use((res) => {
-  if (res.data.errors.length === 0) {
-    return res;
-  }
-  throw new Error();
-});
+axClient.interceptors.response.use((res) => {});
 
 const lazadaEcommerce: ecommerce.Ecommerce = {
   name: 'Lazada',
